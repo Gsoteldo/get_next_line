@@ -1,53 +1,69 @@
-#include "get_next_line.h"
-/*
-char	*ft_free(char *buffer, char *line)
-{
-	char *tmp;
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: gsoteldo <gsoteldo@student.42.fr>          +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2023/11/29 17:19:26 by gsoteldo          #+#    #+#             */
+/*   Updated: 2023/11/29 20:21:21 by gsoteldo         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
 
-	tmp = ft_strjoin(line, buffer);
+#include "get_next_line.h"
+
+static char	*ft_free(char *buffer, char *line)
+{
+	char	*tmp;
+
+	tmp = ft_strjoin(buffer, line);
 	free(buffer);
 	return (tmp);
 }
 
-char	*read_file(int fd, char *buffer)
+static char	*read_file(int fd, char *buffer)
 {
 	char	*line;
 	int		i;
 
 	if (!buffer)
-		buffer = malloc(1);
-	line = malloc(sizeof(char) * (BUFFER_SIZE + 1));
+		buffer = ft_calloc(1, sizeof(char));
+	line = ft_calloc((BUFFER_SIZE + 1), sizeof(char));
+	if (!line)
+		return (NULL);
 	i = 1;
 	while (i > 0)
 	{
 		i = read(fd, line, BUFFER_SIZE);
-		if (i == -1)
+		if (i < 0)
 		{
-			free(buffer);
+			free(line);
 			return (NULL);
 		}
-		line[i] = '\0';
-		line = ft_free(buffer, line);
-		if (ft_strchr(line, '\n'))
+		line[i] = 0;
+		buffer = ft_free(buffer, line);
+		if (ft_strchr(buffer, '\n'))
 			break ;
 	}
 	free(line);
 	return (buffer);
 }
 
-char	*ft_line(char *buffer)
+static char	*ft_line(char *buffer)
 {
 	char	*line;
 	int		i;
 
 	i = 0;
-	if (!buffer[i])
+	if (!buffer || !buffer[0])
 		return (NULL);
-	while (buffer[i] && buffer[i] != '\n')
+	while (buffer[i] != '\0' && buffer[i] != '\n')
 		i++;
-	line = malloc(sizeof(char) * (i + 2));
+	line = ft_calloc((i + 2), sizeof(char));
+	if (!line)
+		return (NULL);
 	i = 0;
-	while (buffer[i] && buffer[i] != '\n')
+	while (buffer[i] != '\n' && buffer[i] != '\0')
 	{
 		line[i] = buffer[i];
 		i++;
@@ -57,13 +73,14 @@ char	*ft_line(char *buffer)
 	return (line);
 }
 
-char	*ft_next(char *buffer)
+static char	*ft_next(char *buffer)
 {
 	char	*next;
 	int		i;
 	int		j;
 
 	i = 0;
+	j = 0;
 	while (buffer[i] && buffer[i] != '\n')
 		i++;
 	if (!buffer[i])
@@ -71,16 +88,15 @@ char	*ft_next(char *buffer)
 		free(buffer);
 		return (NULL);
 	}
-	next = malloc(sizeof(char) * (ft_strlen(buffer) - i + 1));
+	next = ft_calloc(sizeof(char), (ft_strlen(buffer) - i + 1));
+	if (!next)
+		return (NULL);
 	i++;
-	j = 0;
 	while (buffer[i])
 	{
-		next[j] = buffer[i];
-		j++;
-		i++;
+		next[j++] = buffer[i++];
 	}
-	//next[j] = '\0';
+	next[j] = '\0';
 	free(buffer);
 	return (next);
 }
@@ -90,8 +106,12 @@ char	*get_next_line(int fd)
 	static char	*buffer;
 	char		*line;
 
-	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, buffer, 0) < 0)
+	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) < 0)
+	{
+		free(buffer);
+		buffer = NULL;
 		return (NULL);
+	}
 	buffer = read_file(fd, buffer);
 	if (!buffer)
 		return (NULL);
@@ -99,8 +119,31 @@ char	*get_next_line(int fd)
 	buffer = ft_next(buffer);
 	return (line);
 }
+
+/*
+//BONUS -----
+
+char	*get_next_line(int fd)
+{
+	static char	*buffer[1024];
+	char		*line;
+
+	if (fd < 0 || BUFFER_SIZE <= 0 || read(fd, 0, 0) < 0)
+	{
+		free(buffer[fd]);
+		buffer[fd] = '\0';
+		return (NULL);
+	}
+	buffer[fd] = read_file(fd, buffer[fd]);
+	if (!buffer[fd])
+		return (NULL);
+	line = ft_line(buffer[fd]);
+	buffer[fd] = ft_next(buffer[fd]);
+	return (line);
+}
 */
 
+/*
 char	*ft_free(char *buffer, char *buf)
 {
 	char	*temp;
@@ -197,3 +240,4 @@ char	*get_next_line(int fd)
 	buffer = ft_next(buffer);
 	return (line);
 }
+*/
